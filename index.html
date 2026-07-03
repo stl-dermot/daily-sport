@@ -648,7 +648,7 @@
 
       function sanitizeYoutubeVideoId(value) {
         const videoId = value == null ? "" : String(value).trim();
-        return /^[A-Za-z0-9_-]{6,}$/.test(videoId) ? videoId : "";
+        return /^[A-Za-z0-9_-]{11}$/.test(videoId) ? videoId : "";
       }
 
       function getYoutubeVideoIdFromString(rawUrl) {

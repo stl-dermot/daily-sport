@@ -160,6 +160,7 @@ function runApp(entries, today = "2026-07-03", options = {}) {
 
   const context = createContext({
     Date: createFakeDate(today),
+    URL,
     document: {
       documentElement,
       querySelector(selector) {
@@ -359,5 +360,18 @@ const unsupportedToday = unsupportedUrlApp.elements.get("#today-entry").innerHTM
 assert.doesNotMatch(unsupportedToday, /<iframe\b/, "Unsupported today URLs should not render iframes");
 assert.doesNotMatch(unsupportedToday, /src=""/, "Unsupported today URLs should not render empty iframe sources");
 assert.match(unsupportedToday, /Unsupported URL workout/, "Unsupported today URLs should still render title text");
+
+const malformedShortIdApp = runApp([
+  {
+    date: "2026-07-03",
+    title: "Malformed short ID workout",
+    url: "https://youtu.be/abcdef",
+    description: "Short IDs should fall back",
+  },
+]);
+
+const malformedShortIdToday = malformedShortIdApp.elements.get("#today-entry").innerHTML;
+assert.doesNotMatch(malformedShortIdToday, /<iframe\b/, "Malformed short YouTube IDs should not render iframes");
+assert.match(malformedShortIdToday, /Malformed short ID workout/, "Malformed short YouTube IDs should still render title text");
 
 assert.match(html, /overflow-wrap:\s*anywhere/, "Missing long text wrapping guard");
