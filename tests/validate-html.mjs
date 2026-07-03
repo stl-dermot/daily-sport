@@ -19,6 +19,7 @@ const expectations = [
   ["filter field", /id="search-input"/],
   ["filter field aria label", /id="search-input"[^>]*aria-label="搜尋歷史影片"/],
   ["theme toggle", /id="theme-toggle"/],
+  ["theme toggle button class", /<button\b(?=[^>]*\sid="theme-toggle")(?=[^>]*\sclass="(?:[^"]*\s)?theme-toggle(?:\s[^"]*)?")/],
   ["theme toggle function", /function toggleTheme/],
   ["system dark media query", /prefers-color-scheme:\s*dark/],
   ["dark theme override", /html\[data-theme="dark"\]/],
