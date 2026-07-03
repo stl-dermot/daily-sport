@@ -30,6 +30,11 @@ const expectations = [
   ["focus visible halo", /box-shadow:\s*0 0 0 4px color-mix\(in srgb,\s*var\(--focus-ring\)\s*22%,\s*transparent\)/],
   ["data source usage", /window\.dailySportEntries/],
   ["today entry index helper", /findTodayEntryIndex/],
+  ["youtube video id helper", /function getYoutubeVideoId/],
+  ["youtube embed helper", /function getYoutubeEmbedUrl/],
+  ["today media class", /today-media/],
+  ["today video class", /today-video/],
+  ["today iframe aspect ratio", /aspect-ratio:\s*16\s*\/\s*9/],
 ];
 
 for (const [label, pattern] of expectations) {
@@ -196,7 +201,7 @@ const smokeEntries = [
   {
     date: "2026-07-03",
     title: "First same day entry",
-    url: "https://example.test/first",
+    url: "https://youtu.be/FirstSame1",
     description: "Earlier same-day entry should stay in history",
   },
   {
@@ -208,7 +213,7 @@ const smokeEntries = [
   {
     date: "2026-07-03",
     title: "Last same day entry",
-    url: "https://example.test/last",
+    url: "https://www.youtube.com/watch?v=LastSame99A&feature=share",
     description: "today-only-keyword",
   },
 ];
@@ -238,6 +243,18 @@ assert.match(smokeToday, /Last same day entry/, "Last original same-day item sho
 assert.doesNotMatch(smokeToday, /First same day entry/, "Earlier same-day item should not render as today");
 assert.match(smokeHistory, /First same day entry/, "Only the selected today index should be excluded from history");
 assert.doesNotMatch(smokeHistory, /Last same day entry/, "Selected today item should be excluded from history");
+assert.match(smokeToday, /<iframe\b/, "Today card should render an iframe for a YouTube URL");
+assert.match(smokeToday, /class="today-video"/, "Today iframe should use the today video class");
+assert.match(
+  smokeToday,
+  /src="https:\/\/www\.youtube\.com\/embed\/LastSame99A"/,
+  "Today iframe should use the derived YouTube embed URL",
+);
+assert.match(smokeToday, /title="Last same day entry"/, "Today iframe should use the entry title as its accessible title");
+assert.match(smokeToday, /loading="lazy"/, "Today iframe should lazy load");
+assert.match(smokeToday, /allowfullscreen/, "Today iframe should allow fullscreen playback");
+assert.match(smokeToday, /referrerpolicy="strict-origin-when-cross-origin"/, "Today iframe should include a referrer policy");
+assert.doesNotMatch(smokeHistory, /<iframe\b/, "History list should not render iframe embeds");
 
 smokeApp.search("today-only-keyword");
 assert.match(
@@ -295,7 +312,52 @@ assert.doesNotMatch(missingUrlApp.elements.get("#today-entry").innerHTML, /<a\b[
 assert.doesNotMatch(missingUrlApp.elements.get("#history-list").innerHTML, /<a\b[^>]*href=""/, "History title should not render an empty href");
 assert.match(missingUrlApp.elements.get("#today-entry").innerHTML, /Today missing URL/, "Today title text should still render");
 assert.match(missingUrlApp.elements.get("#history-list").innerHTML, /History missing URL/, "History title text should still render");
+assert.doesNotMatch(missingUrlApp.elements.get("#today-entry").innerHTML, /<iframe\b/, "Missing today URL should not render an iframe");
 
 assert.equal(countMatches(missingUrlApp.elements.get("#history-list").innerHTML, /<article class="record">/g), 1);
+
+const shortUrlApp = runApp([
+  {
+    date: "2026-07-03",
+    title: "Short URL workout",
+    url: "https://youtu.be/ShortsOk123",
+    description: "Short URL should embed",
+  },
+]);
+
+assert.match(
+  shortUrlApp.elements.get("#today-entry").innerHTML,
+  /src="https:\/\/www\.youtube\.com\/embed\/ShortsOk123"/,
+  "youtu.be URLs should embed",
+);
+
+const shortsPathApp = runApp([
+  {
+    date: "2026-07-03",
+    title: "Shorts path workout",
+    url: "https://www.youtube.com/shorts/ShortPath1A?feature=share",
+    description: "Shorts path should embed",
+  },
+]);
+
+assert.match(
+  shortsPathApp.elements.get("#today-entry").innerHTML,
+  /src="https:\/\/www\.youtube\.com\/embed\/ShortPath1A"/,
+  "youtube.com/shorts URLs should embed",
+);
+
+const unsupportedUrlApp = runApp([
+  {
+    date: "2026-07-03",
+    title: "Unsupported URL workout",
+    url: "https://example.test/not-youtube",
+    description: "Unsupported URL should fall back",
+  },
+]);
+
+const unsupportedToday = unsupportedUrlApp.elements.get("#today-entry").innerHTML;
+assert.doesNotMatch(unsupportedToday, /<iframe\b/, "Unsupported today URLs should not render iframes");
+assert.doesNotMatch(unsupportedToday, /src=""/, "Unsupported today URLs should not render empty iframe sources");
+assert.match(unsupportedToday, /Unsupported URL workout/, "Unsupported today URLs should still render title text");
 
 assert.match(html, /overflow-wrap:\s*anywhere/, "Missing long text wrapping guard");

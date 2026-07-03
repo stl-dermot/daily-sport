@@ -236,16 +236,40 @@
 
       .today-card {
         display: grid;
-        grid-template-columns: auto minmax(0, 1fr) auto;
-        gap: 14px;
-        align-items: center;
+        grid-template-columns: minmax(0, 1fr);
+        align-items: stretch;
         border: 1px solid var(--line);
         border-left: 5px solid var(--primary);
         border-radius: 8px;
         background: var(--today-bg);
         color: var(--today-text);
-        padding: 16px 18px;
+        overflow: hidden;
         box-shadow: var(--shadow);
+      }
+
+      .today-card--fallback {
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        gap: 14px;
+        align-items: center;
+        padding: 16px 18px;
+      }
+
+      .today-media {
+        aspect-ratio: 16 / 9;
+        border-bottom: 1px solid var(--line);
+        background: #000000;
+      }
+
+      .today-video {
+        display: block;
+        width: 100%;
+        height: 100%;
+        border: 0;
+        background: #000000;
+      }
+
+      .today-copy {
+        padding: 16px 18px 18px;
       }
 
       .equalizer-icon {
@@ -285,9 +309,23 @@
       }
 
       .today-date {
+        display: inline-flex;
+        align-items: center;
+        min-height: 28px;
+        margin-top: 10px;
+        border-radius: 999px;
+        background: var(--surface-muted);
         color: var(--today-muted);
+        padding: 0 10px;
         font-size: 0.92rem;
         white-space: nowrap;
+      }
+
+      .today-card--fallback .today-date {
+        display: block;
+        margin-top: 0;
+        background: transparent;
+        padding: 0;
       }
 
       .history-panel {
@@ -444,11 +482,11 @@
           max-width: none;
         }
 
-        .today-card {
+        .today-card--fallback {
           grid-template-columns: auto minmax(0, 1fr);
         }
 
-        .today-date {
+        .today-card--fallback .today-date {
           grid-column: 2;
           justify-self: start;
         }
@@ -608,14 +646,98 @@
         `;
       }
 
+      function sanitizeYoutubeVideoId(value) {
+        const videoId = value == null ? "" : String(value).trim();
+        return /^[A-Za-z0-9_-]{6,}$/.test(videoId) ? videoId : "";
+      }
+
+      function getYoutubeVideoIdFromString(rawUrl) {
+        const watchMatch = rawUrl.match(/^https?:\/\/(?:www\.|m\.)?youtube\.com\/watch\?(?:[^#]*&)?v=([^&#]+)/);
+
+        if (watchMatch) {
+          return sanitizeYoutubeVideoId(watchMatch[1]);
+        }
+
+        const shortsMatch = rawUrl.match(/^https?:\/\/(?:www\.)?youtube\.com\/shorts\/([^/?#]+)/);
+
+        if (shortsMatch) {
+          return sanitizeYoutubeVideoId(shortsMatch[1]);
+        }
+
+        const shortUrlMatch = rawUrl.match(/^https?:\/\/youtu\.be\/([^/?#]+)/);
+        return shortUrlMatch ? sanitizeYoutubeVideoId(shortUrlMatch[1]) : "";
+      }
+
+      function getYoutubeVideoId(url) {
+        const rawUrl = String(url || "").trim();
+
+        if (!rawUrl) {
+          return "";
+        }
+
+        try {
+          const parsedUrl = new URL(rawUrl);
+          const hostname = parsedUrl.hostname.replace(/^www\./, "");
+
+          if (hostname === "youtube.com" || hostname === "m.youtube.com") {
+            if (parsedUrl.pathname === "/watch") {
+              return sanitizeYoutubeVideoId(parsedUrl.searchParams.get("v"));
+            }
+
+            const shortsMatch = parsedUrl.pathname.match(/^\/shorts\/([^/?#]+)/);
+            return shortsMatch ? sanitizeYoutubeVideoId(shortsMatch[1]) : "";
+          }
+
+          if (hostname === "youtu.be") {
+            const [videoId] = parsedUrl.pathname.split("/").filter(Boolean);
+            return sanitizeYoutubeVideoId(videoId);
+          }
+        } catch {
+          return getYoutubeVideoIdFromString(rawUrl);
+        }
+
+        return "";
+      }
+
+      function getYoutubeEmbedUrl(entry) {
+        const videoId = getYoutubeVideoId(getEntryValue(entry, "url"));
+        return videoId ? `https://www.youtube.com/embed/${videoId}` : "";
+      }
+
       function renderTodayEntry(entry) {
         if (!entry) {
           elements.today.innerHTML = '<div class="empty-state">今天還沒有運動影片</div>';
           return;
         }
 
+        const embedUrl = getYoutubeEmbedUrl(entry);
+
+        if (embedUrl) {
+          elements.today.innerHTML = `
+            <article class="today-card">
+              <div class="today-media">
+                <iframe
+                  class="today-video"
+                  src="${escapeHtml(embedUrl)}"
+                  title="${escapeHtml(getEntryValue(entry, "title"))}"
+                  loading="lazy"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  referrerpolicy="strict-origin-when-cross-origin"
+                  allowfullscreen
+                ></iframe>
+              </div>
+              <div class="today-copy">
+                ${renderEntryTitle(entry, "today-title")}
+                <p class="today-description">${escapeHtml(getEntryValue(entry, "description"))}</p>
+                <span class="today-date">${escapeHtml(getEntryValue(entry, "date"))}</span>
+              </div>
+            </article>
+          `;
+          return;
+        }
+
         elements.today.innerHTML = `
-          <article class="today-card">
+          <article class="today-card today-card--fallback">
             <span class="equalizer-icon" aria-hidden="true">▮▮▮</span>
             <div>
               ${renderEntryTitle(entry, "today-title")}
