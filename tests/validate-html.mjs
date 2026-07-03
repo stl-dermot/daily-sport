@@ -17,6 +17,12 @@ const expectations = [
   ["history list", /id="history-list"/],
   ["history count", /id="history-count"/],
   ["filter field", /id="search-input"/],
+  ["filter field aria label", /id="search-input"[^>]*aria-label="搜尋歷史影片"/],
+  ["theme toggle", /id="theme-toggle"/],
+  ["theme toggle function", /function toggleTheme/],
+  ["system dark media query", /prefers-color-scheme:\s*dark/],
+  ["dark theme override", /html\[data-theme="dark"\]/],
+  ["light theme override", /html\[data-theme="light"\]/],
   ["data source usage", /window\.dailySportEntries/],
   ["today entry index helper", /findTodayEntryIndex/],
 ];
@@ -37,6 +43,7 @@ for (const [label, pattern] of forbiddenHtml) {
   assert.doesNotMatch(html, pattern, `Unexpected ${label}`);
 }
 
+assert.doesNotMatch(html, /document\.cookie|localStorage|sessionStorage/, "Theme should not use persistent storage");
 assert.doesNotMatch(html, />影片列表</, "Old list heading should be renamed");
 
 assert.match(data, /window\.dailySportEntries\s*=\s*\[/, "Missing data array");
@@ -53,6 +60,7 @@ class FakeElement {
   constructor() {
     this._innerHTML = "";
     this._textContent = "";
+    this.attributes = new Map();
     this.listeners = new Map();
     this.value = "";
   }
@@ -76,6 +84,18 @@ class FakeElement {
 
   addEventListener(type, handler) {
     this.listeners.set(type, handler);
+  }
+
+  setAttribute(name, value) {
+    this.attributes.set(name, String(value));
+  }
+
+  getAttribute(name) {
+    return this.attributes.get(name) ?? null;
+  }
+
+  click() {
+    this.dispatch("click");
   }
 
   dispatch(type) {
@@ -115,7 +135,7 @@ function createFakeDate(today) {
   };
 }
 
-function runApp(entries, today = "2026-07-03") {
+function runApp(entries, today = "2026-07-03", options = {}) {
   const elements = new Map([
     ["#today-entry", new FakeElement()],
     ["#history-list", new FakeElement()],
@@ -123,28 +143,46 @@ function runApp(entries, today = "2026-07-03") {
     ["#search-input", new FakeElement()],
     ["#total-count", new FakeElement()],
     ["#latest-date", new FakeElement()],
+    ["#theme-toggle", new FakeElement()],
   ]);
+
+  const documentElement = { dataset: {} };
 
   const context = createContext({
     Date: createFakeDate(today),
     document: {
+      documentElement,
       querySelector(selector) {
         return elements.get(selector) ?? null;
       },
     },
     window: {
       dailySportEntries: entries.map((entry) => ({ ...entry })),
+      matchMedia(query) {
+        return {
+          matches: query === "(prefers-color-scheme: dark)" ? Boolean(options.prefersDark) : false,
+          media: query,
+          addEventListener() {},
+          removeEventListener() {},
+          addListener() {},
+          removeListener() {},
+        };
+      },
     },
   });
 
   appScript.runInContext(context);
 
   return {
+    documentElement,
     elements,
     search(query) {
       const searchInput = elements.get("#search-input");
       searchInput.value = query;
       searchInput.dispatch("input");
+    },
+    toggleTheme() {
+      elements.get("#theme-toggle").click();
     },
   };
 }
@@ -173,6 +211,20 @@ const smokeEntries = [
 const smokeApp = runApp(smokeEntries);
 const smokeToday = smokeApp.elements.get("#today-entry").innerHTML;
 const smokeHistory = smokeApp.elements.get("#history-list").innerHTML;
+const smokeToggle = smokeApp.elements.get("#theme-toggle");
+
+assert.equal(smokeToggle.textContent, "Dark", "Light default should offer dark mode");
+assert.equal(smokeToggle.getAttribute("aria-pressed"), "false", "Light default should not be pressed");
+
+smokeApp.toggleTheme();
+assert.equal(smokeApp.documentElement.dataset.theme, "dark", "First click should set dark theme");
+assert.equal(smokeToggle.textContent, "Light", "Dark theme should offer light mode");
+assert.equal(smokeToggle.getAttribute("aria-pressed"), "true", "Dark theme should be pressed");
+
+smokeApp.toggleTheme();
+assert.equal(smokeApp.documentElement.dataset.theme, "light", "Second click should set light theme");
+assert.equal(smokeToggle.textContent, "Dark", "Light theme should offer dark mode after second click");
+assert.equal(smokeToggle.getAttribute("aria-pressed"), "false", "Light theme should not be pressed after second click");
 
 assert.match(smokeToday, /Last same day entry/, "Last original same-day item should render as today");
 assert.doesNotMatch(smokeToday, /First same day entry/, "Earlier same-day item should not render as today");
@@ -190,6 +242,23 @@ assert.match(
   /沒有符合條件的歷史影片/,
   "History search should show no-match empty state when only today matches",
 );
+
+smokeApp.toggleTheme();
+assert.match(
+  smokeApp.elements.get("#today-entry").innerHTML,
+  /Last same day entry/,
+  "Theme toggle should not hide the today card after search",
+);
+assert.match(
+  smokeApp.elements.get("#history-list").innerHTML,
+  /沒有符合條件的歷史影片/,
+  "Theme toggle should not reset no-match history state",
+);
+
+const preferredDarkApp = runApp(smokeEntries, "2026-07-03", { prefersDark: true });
+const preferredDarkToggle = preferredDarkApp.elements.get("#theme-toggle");
+assert.equal(preferredDarkToggle.textContent, "Light", "Preferred dark app should offer light mode");
+assert.equal(preferredDarkToggle.getAttribute("aria-pressed"), "true", "Preferred dark app should start pressed");
 
 const noTodayApp = runApp([smokeEntries[1]]);
 assert.match(noTodayApp.elements.get("#today-entry").innerHTML, /今天還沒有運動影片/, "Missing today empty state");
