@@ -35,6 +35,7 @@ const expectations = [
   ["today media class", /today-media/],
   ["today video class", /today-video/],
   ["today iframe aspect ratio", /aspect-ratio:\s*16\s*\/\s*9/],
+  ["today media full width", /\.today-media\s*{[^}]*width:\s*100%/],
 ];
 
 for (const [label, pattern] of expectations) {
