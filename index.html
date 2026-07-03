@@ -261,6 +261,13 @@
         white-space: pre-wrap;
       }
 
+      .today-title,
+      .today-description,
+      .record-title,
+      .record-description {
+        overflow-wrap: anywhere;
+      }
+
       .empty-state {
         border: 1px dashed #c7d1c8;
         border-radius: 8px;
@@ -395,6 +402,21 @@
           .replaceAll("'", "&#039;");
       }
 
+      function renderEntryTitle(entry, className) {
+        const title = escapeHtml(getEntryValue(entry, "title"));
+        const url = getEntryValue(entry, "url");
+
+        if (!url) {
+          return `<h3 class="${className}">${title}</h3>`;
+        }
+
+        return `
+          <h3 class="${className}">
+            <a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">${title}</a>
+          </h3>
+        `;
+      }
+
       function renderTodayEntry(entry) {
         if (!entry) {
           elements.today.innerHTML = '<div class="empty-state">今天還沒有運動影片</div>';
@@ -404,9 +426,7 @@
         elements.today.innerHTML = `
           <article class="today-card">
             <div>
-              <h3 class="today-title">
-                <a href="${escapeHtml(getEntryValue(entry, "url"))}" target="_blank" rel="noopener noreferrer">${escapeHtml(getEntryValue(entry, "title"))}</a>
-              </h3>
+              ${renderEntryTitle(entry, "today-title")}
               <p class="today-description">${escapeHtml(getEntryValue(entry, "description"))}</p>
             </div>
             <span class="today-date">${escapeHtml(getEntryValue(entry, "date"))}</span>
@@ -433,9 +453,7 @@
           .map((entry) => `
             <article class="record">
               <span class="record-date">${escapeHtml(getEntryValue(entry, "date"))}</span>
-              <h3 class="record-title">
-                <a href="${escapeHtml(getEntryValue(entry, "url"))}" target="_blank" rel="noopener noreferrer">${escapeHtml(getEntryValue(entry, "title"))}</a>
-              </h3>
+              ${renderEntryTitle(entry, "record-title")}
               <p class="record-description">${escapeHtml(getEntryValue(entry, "description"))}</p>
             </article>
           `)
