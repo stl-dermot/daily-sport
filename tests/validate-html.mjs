@@ -24,6 +24,10 @@ const expectations = [
   ["system dark media query", /prefers-color-scheme:\s*dark/],
   ["dark theme override", /html\[data-theme="dark"\]/],
   ["light theme override", /html\[data-theme="light"\]/],
+  ["opaque focus ring token", /--focus-ring:\s*#[0-9a-fA-F]{6}/],
+  ["focus visible outline token", /outline:\s*2px solid var\(--focus-ring\)/],
+  ["focus visible outline offset", /outline-offset:\s*3px/],
+  ["focus visible halo", /box-shadow:\s*0 0 0 4px color-mix\(in srgb,\s*var\(--focus-ring\)\s*22%,\s*transparent\)/],
   ["data source usage", /window\.dailySportEntries/],
   ["today entry index helper", /findTodayEntryIndex/],
 ];
@@ -214,17 +218,20 @@ const smokeToday = smokeApp.elements.get("#today-entry").innerHTML;
 const smokeHistory = smokeApp.elements.get("#history-list").innerHTML;
 const smokeToggle = smokeApp.elements.get("#theme-toggle");
 
-assert.equal(smokeToggle.textContent, "Dark", "Light default should offer dark mode");
+assert.equal(smokeToggle.textContent, "深色模式：關", "Light default should show dark mode off");
+assert.equal(smokeToggle.getAttribute("aria-label"), "深色模式", "Theme toggle should have a stable accessible name");
 assert.equal(smokeToggle.getAttribute("aria-pressed"), "false", "Light default should not be pressed");
 
 smokeApp.toggleTheme();
 assert.equal(smokeApp.documentElement.dataset.theme, "dark", "First click should set dark theme");
-assert.equal(smokeToggle.textContent, "Light", "Dark theme should offer light mode");
+assert.equal(smokeToggle.textContent, "深色模式：開", "Dark theme should show dark mode on");
+assert.equal(smokeToggle.getAttribute("aria-label"), "深色模式", "Theme toggle accessible name should stay stable in dark mode");
 assert.equal(smokeToggle.getAttribute("aria-pressed"), "true", "Dark theme should be pressed");
 
 smokeApp.toggleTheme();
 assert.equal(smokeApp.documentElement.dataset.theme, "light", "Second click should set light theme");
-assert.equal(smokeToggle.textContent, "Dark", "Light theme should offer dark mode after second click");
+assert.equal(smokeToggle.textContent, "深色模式：關", "Light theme should show dark mode off after second click");
+assert.equal(smokeToggle.getAttribute("aria-label"), "深色模式", "Theme toggle accessible name should stay stable after returning to light");
 assert.equal(smokeToggle.getAttribute("aria-pressed"), "false", "Light theme should not be pressed after second click");
 
 assert.match(smokeToday, /Last same day entry/, "Last original same-day item should render as today");
@@ -258,7 +265,8 @@ assert.match(
 
 const preferredDarkApp = runApp(smokeEntries, "2026-07-03", { prefersDark: true });
 const preferredDarkToggle = preferredDarkApp.elements.get("#theme-toggle");
-assert.equal(preferredDarkToggle.textContent, "Light", "Preferred dark app should offer light mode");
+assert.equal(preferredDarkToggle.textContent, "深色模式：開", "Preferred dark app should show dark mode on");
+assert.equal(preferredDarkToggle.getAttribute("aria-label"), "深色模式", "Preferred dark app should keep the stable accessible name");
 assert.equal(preferredDarkToggle.getAttribute("aria-pressed"), "true", "Preferred dark app should start pressed");
 
 const noTodayApp = runApp([smokeEntries[1]]);

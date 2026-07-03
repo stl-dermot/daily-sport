@@ -26,7 +26,7 @@
         --row-bg: #ffffff;
         --row-hover: #f9f9ff;
         --empty-bg: #fbfcff;
-        --focus-ring: rgba(98, 84, 255, 0.24);
+        --focus-ring: #4d3dff;
         --shadow: 0 16px 36px rgba(37, 43, 61, 0.09);
         --chip-shadow: 0 8px 18px rgba(37, 43, 61, 0.06);
       }
@@ -52,7 +52,7 @@
           --row-bg: #15131e;
           --row-hover: #1c1929;
           --empty-bg: #12111a;
-          --focus-ring: rgba(139, 124, 255, 0.34);
+          --focus-ring: #d9d2ff;
           --shadow: 0 18px 40px rgba(0, 0, 0, 0.34);
           --chip-shadow: none;
         }
@@ -78,7 +78,7 @@
         --row-bg: #15131e;
         --row-hover: #1c1929;
         --empty-bg: #12111a;
-        --focus-ring: rgba(139, 124, 255, 0.34);
+        --focus-ring: #d9d2ff;
         --shadow: 0 18px 40px rgba(0, 0, 0, 0.34);
         --chip-shadow: none;
       }
@@ -109,8 +109,9 @@
       a:focus-visible,
       button:focus-visible,
       input:focus-visible {
-        outline: 3px solid var(--focus-ring);
-        outline-offset: 2px;
+        outline: 2px solid var(--focus-ring);
+        outline-offset: 3px;
+        box-shadow: 0 0 0 4px color-mix(in srgb, var(--focus-ring) 22%, transparent);
       }
 
       .app-shell {
@@ -481,7 +482,7 @@
               <span>最新日期</span>
             </div>
           </div>
-          <button id="theme-toggle" class="theme-toggle" type="button" aria-pressed="false">Dark</button>
+          <button id="theme-toggle" class="theme-toggle" type="button" aria-label="深色模式" aria-pressed="false">深色模式：關</button>
         </div>
       </header>
 
@@ -531,11 +532,11 @@
 
       function updateThemeToggle() {
         const currentTheme = getCurrentTheme();
-        const nextTheme = currentTheme === "dark" ? "Light" : "Dark";
+        const isDark = currentTheme === "dark";
 
-        elements.themeToggle.textContent = nextTheme;
-        elements.themeToggle.setAttribute("aria-label", `切換到${nextTheme === "Light" ? "淺色" : "深色"}模式`);
-        elements.themeToggle.setAttribute("aria-pressed", currentTheme === "dark" ? "true" : "false");
+        elements.themeToggle.textContent = `深色模式：${isDark ? "開" : "關"}`;
+        elements.themeToggle.setAttribute("aria-label", "深色模式");
+        elements.themeToggle.setAttribute("aria-pressed", isDark ? "true" : "false");
       }
 
       function toggleTheme() {
