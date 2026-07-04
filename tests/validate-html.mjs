@@ -36,6 +36,13 @@ const expectations = [
   ["today video class", /today-video/],
   ["today iframe aspect ratio", /aspect-ratio:\s*16\s*\/\s*9/],
   ["today media full width", /\.today-media\s*{[^}]*width:\s*100%/],
+  ["youtube oembed endpoint", /https:\/\/www\.youtube\.com\/oembed/],
+  ["oembed metadata cache", /const oEmbedMetadataCache = new Map\(\)/],
+  ["oembed loader", /function loadOEmbedMetadata/],
+  ["oembed endpoint helper", /function getYoutubeOEmbedUrl/],
+  ["history record media class", /record-media/],
+  ["history record thumbnail class", /record-thumbnail/],
+  ["history record author class", /record-author/],
 ];
 
 for (const [label, pattern] of expectations) {
@@ -56,6 +63,7 @@ for (const [label, pattern] of forbiddenHtml) {
 
 assert.doesNotMatch(html, /document\.cookie|localStorage|sessionStorage/, "Theme should not use persistent storage");
 assert.doesNotMatch(html, />影片列表</, "Old list heading should be renamed");
+assert.doesNotMatch(html, /播放時長|getDuration|duration/i, "History metadata should not include duration UI or APIs");
 
 assert.match(data, /window\.dailySportEntries\s*=\s*\[/, "Missing data array");
 assert.match(data, /date:\s*"2026-07-03"/, "Missing seeded date");
@@ -158,10 +166,12 @@ function runApp(entries, today = "2026-07-03", options = {}) {
   ]);
 
   const documentElement = { dataset: {} };
+  const fakeFetch = options.fetch;
 
   const context = createContext({
     Date: createFakeDate(today),
     URL,
+    fetch: fakeFetch,
     document: {
       documentElement,
       querySelector(selector) {
@@ -169,6 +179,7 @@ function runApp(entries, today = "2026-07-03", options = {}) {
       },
     },
     window: {
+      fetch: fakeFetch,
       dailySportEntries: entries.map((entry) => ({ ...entry })),
       matchMedia(query) {
         return {
@@ -199,11 +210,18 @@ function runApp(entries, today = "2026-07-03", options = {}) {
   };
 }
 
+async function flushAsyncWork() {
+  await Promise.resolve();
+  await Promise.resolve();
+  await Promise.resolve();
+  await Promise.resolve();
+}
+
 const smokeEntries = [
   {
     date: "2026-07-03",
     title: "First same day entry",
-    url: "https://youtu.be/FirstSame1",
+    url: "https://youtu.be/FirstSame1A?si=abc123&feature=share",
     description: "Earlier same-day entry should stay in history",
   },
   {
@@ -257,6 +275,132 @@ assert.match(smokeToday, /loading="lazy"/, "Today iframe should lazy load");
 assert.match(smokeToday, /allowfullscreen/, "Today iframe should allow fullscreen playback");
 assert.match(smokeToday, /referrerpolicy="strict-origin-when-cross-origin"/, "Today iframe should include a referrer policy");
 assert.doesNotMatch(smokeHistory, /<iframe\b/, "History list should not render iframe embeds");
+
+const oEmbedRequests = [];
+const oEmbedApp = runApp(smokeEntries, "2026-07-03", {
+  fetch: async (requestUrl) => {
+    oEmbedRequests.push(String(requestUrl));
+    return {
+      ok: true,
+      status: 200,
+      async json() {
+        return {
+          title: "Remote oEmbed title",
+          author_name: "Remote Trainer",
+          author_url: "https://www.youtube.com/@remote-trainer",
+          thumbnail_url: "https://i.ytimg.com/vi/FirstSame1A/hqdefault.jpg",
+          thumbnail_width: 480,
+          thumbnail_height: 360,
+        };
+      },
+    };
+  },
+});
+
+const oEmbedTodayElement = oEmbedApp.elements.get("#today-entry");
+oEmbedTodayElement.innerHTML = `${oEmbedTodayElement.innerHTML}<!-- active-playback-sentinel -->`;
+const oEmbedTodayBeforeMetadata = oEmbedTodayElement.innerHTML;
+
+await flushAsyncWork();
+
+const oEmbedHistory = oEmbedApp.elements.get("#history-list").innerHTML;
+assert.equal(
+  oEmbedTodayElement.innerHTML,
+  oEmbedTodayBeforeMetadata,
+  "oEmbed metadata resolution should not rebuild the active today iframe",
+);
+assert.equal(oEmbedRequests.length, 1, "Only YouTube history rows should request oEmbed metadata");
+
+const requestedOEmbedUrl = new URL(oEmbedRequests[0]);
+assert.equal(
+  `${requestedOEmbedUrl.origin}${requestedOEmbedUrl.pathname}`,
+  "https://www.youtube.com/oembed",
+  "oEmbed requests should use the YouTube oEmbed endpoint",
+);
+assert.equal(
+  requestedOEmbedUrl.searchParams.get("url"),
+  "https://youtu.be/FirstSame1A?si=abc123&feature=share",
+  "oEmbed requests should preserve the original video URL as the url parameter",
+);
+assert.match(
+  oEmbedRequests[0],
+  /[?&]url=https%3A%2F%2Fyoutu\.be%2FFirstSame1A%3Fsi%3Dabc123%26feature%3Dshare(?:&|$)/,
+  "oEmbed requests should percent-encode the original video URL",
+);
+assert.equal(requestedOEmbedUrl.searchParams.get("format"), "json", "oEmbed requests should ask for JSON");
+assert.match(oEmbedHistory, /class="record-thumbnail"/, "Successful oEmbed metadata should render a thumbnail image");
+assert.match(oEmbedHistory, /src="https:\/\/i\.ytimg\.com\/vi\/FirstSame1A\/hqdefault\.jpg"/, "Thumbnail should use oEmbed thumbnail_url");
+assert.match(oEmbedHistory, /alt="First same day entry"/, "Thumbnail alt text should use the local title");
+assert.match(oEmbedHistory, /Remote Trainer/, "Successful oEmbed metadata should render author_name");
+assert.doesNotMatch(oEmbedHistory, /Remote oEmbed title/, "Local data.js title should stay authoritative for visible row title");
+
+const failingOEmbedRequests = [];
+const failingOEmbedApp = runApp(smokeEntries, "2026-07-03", {
+  fetch: async (requestUrl) => {
+    failingOEmbedRequests.push(String(requestUrl));
+    return {
+      ok: false,
+      status: 404,
+      async json() {
+        return {};
+      },
+    };
+  },
+});
+
+await flushAsyncWork();
+
+const failingOEmbedHistory = failingOEmbedApp.elements.get("#history-list").innerHTML;
+assert.equal(failingOEmbedRequests.length, 1, "Failed oEmbed requests should still be attempted once per YouTube history URL");
+assert.match(failingOEmbedHistory, /First same day entry/, "Failed oEmbed should preserve the local title");
+assert.match(failingOEmbedHistory, /Earlier same-day entry should stay in history/, "Failed oEmbed should preserve the local description");
+assert.doesNotMatch(failingOEmbedHistory, /record-thumbnail/, "Failed oEmbed should not render a broken thumbnail image");
+assert.doesNotMatch(failingOEmbedHistory, /<img\b/, "Failed oEmbed should not render a broken image element");
+
+const nonYoutubeFetchRequests = [];
+const nonYoutubeHistoryApp = runApp(
+  [
+    {
+      date: "2026-07-03",
+      title: "Today workout",
+      url: "https://www.youtube.com/watch?v=TodayOnly1A",
+      description: "Today card is not enriched by oEmbed",
+    },
+    {
+      date: "2026-07-02",
+      title: "External history workout",
+      url: "https://example.test/history",
+      description: "External history URLs should not call YouTube oEmbed",
+    },
+  ],
+  "2026-07-03",
+  {
+    fetch: async (requestUrl) => {
+      nonYoutubeFetchRequests.push(String(requestUrl));
+      return {
+        ok: true,
+        status: 200,
+        async json() {
+          return {};
+        },
+      };
+    },
+  },
+);
+
+await flushAsyncWork();
+
+assert.equal(nonYoutubeFetchRequests.length, 0, "Non-YouTube history URLs should not call YouTube oEmbed");
+assert.match(
+  nonYoutubeHistoryApp.elements.get("#history-list").innerHTML,
+  /External history workout/,
+  "Non-YouTube history rows should still render local content",
+);
+assert.match(
+  nonYoutubeHistoryApp.elements.get("#history-list").innerHTML,
+  /External history URLs should not call YouTube oEmbed/,
+  "Non-YouTube history rows should preserve the local description",
+);
 
 smokeApp.search("today-only-keyword");
 assert.match(
