@@ -22,5 +22,13 @@ window.dailySportEntries = [
     url: "https://www.youtube.com/watch?v=ofQIP9Roa8M",
     thumbnail: "https://i.ytimg.com/vi/ofQIP9Roa8M/hqdefault.jpg",
     description: "這支全身操主打「超級膝蓋友善」，全程零跳躍、零器材，地板跟關節都能安心過一天！強度中等偏溫和，動作不重複也不無聊，很適合下午想動一動、又不想被彈跳嚇到心臟的同事們一起輕鬆跟練～"
+  },
+  {
+    id: "2026-07-06-dk5wclt-hz0",
+    date: "2026-07-06",
+    title: "30 MIN LOW IMPACT Full Body Tabata Workout - No Equipment, No Jumping - Knee Friendly exercises",
+    url: "https://www.youtube.com/watch?v=DK5wcLt-Hz0",
+    thumbnail: "https://i.ytimg.com/vi/DK5wcLt-Hz0/hqdefault.jpg",
+    description: "今天來一支塔巴塔全身操，一樣走「零跳躍、零器材」路線，膝蓋和地板都能安心休息！強度是中等偏上的間歇式燃脂，20秒衝刺配10秒喘息，節奏明快但不會讓人喘到崩潰，很適合下午想提神又怕太激烈的男女同事一起跟練～"
   }
 ];
