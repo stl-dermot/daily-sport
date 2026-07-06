@@ -54,6 +54,7 @@ const forbiddenHtml = [
   ["oembed loader", /loadOEmbedMetadata/],
   ["oembed endpoint helper", /getYoutubeOEmbedUrl/],
   ["oembed author rendering", /renderHistoryAuthor|record-author/],
+  ["dead history rerender helper", /renderCurrentHistoryEntries/],
   ["edit action", /data-action="edit"|editEntry|編輯/],
   ["delete action", /data-action="delete"|deleteEntry|刪除/],
   ["JSON export button", /id="export-json"|exportEntries|匯出 JSON/],
@@ -426,6 +427,44 @@ assert.match(
 );
 
 assert.equal(countMatches(missingUrlApp.elements.get("#history-list").innerHTML, /<article class="record">/g), 1);
+
+const missingUrlAndThumbnailApp = runApp([
+  {
+    date: "2026-07-03",
+    title: "Today workout",
+    url: "https://www.youtube.com/watch?v=TodayOnly1A",
+    thumbnail: "https://cdn.example.test/today.jpg",
+    description: "Today card keeps iframe behavior",
+  },
+  {
+    date: "2026-07-02",
+    title: "History missing URL and thumbnail",
+    url: "",
+    description: "Missing URL and thumbnail should stay as a placeholder",
+  },
+]);
+
+const missingUrlAndThumbnailHistory = missingUrlAndThumbnailApp.elements.get("#history-list").innerHTML;
+assert.match(
+  missingUrlAndThumbnailHistory,
+  /History missing URL and thumbnail/,
+  "Rows without URL or thumbnail should still render local content",
+);
+assert.match(
+  missingUrlAndThumbnailHistory,
+  /record-media-placeholder/,
+  "Rows without URL or thumbnail should render a placeholder",
+);
+assert.doesNotMatch(
+  missingUrlAndThumbnailHistory,
+  /<img\b/,
+  "Rows without URL or thumbnail should not render an image",
+);
+assert.doesNotMatch(
+  missingUrlAndThumbnailHistory,
+  /<a\b[^>]*href=""/,
+  "Rows without URL or thumbnail should not render an empty link",
+);
 
 const shortUrlApp = runApp([
   {

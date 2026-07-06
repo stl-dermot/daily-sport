@@ -838,14 +838,6 @@
           .join("");
       }
 
-      function renderCurrentHistoryEntries() {
-        const query = elements.search.value.trim().toLowerCase();
-        const todayEntryIndex = findTodayEntryIndex(entries);
-        const historyEntries = entries.filter((entry, index) => index !== todayEntryIndex);
-
-        renderHistoryEntries(historyEntries, query);
-      }
-
       function render() {
         const query = elements.search.value.trim().toLowerCase();
         const sortedEntries = sortEntries(entries);
