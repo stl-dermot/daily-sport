@@ -36,13 +36,9 @@ const expectations = [
   ["today video class", /today-video/],
   ["today iframe aspect ratio", /aspect-ratio:\s*16\s*\/\s*9/],
   ["today media full width", /\.today-media\s*{[^}]*width:\s*100%/],
-  ["youtube oembed endpoint", /https:\/\/www\.youtube\.com\/oembed/],
-  ["oembed metadata cache", /const oEmbedMetadataCache = new Map\(\)/],
-  ["oembed loader", /function loadOEmbedMetadata/],
-  ["oembed endpoint helper", /function getYoutubeOEmbedUrl/],
   ["history record media class", /record-media/],
   ["history record thumbnail class", /record-thumbnail/],
-  ["history record author class", /record-author/],
+  ["history thumbnail field usage", /getEntryValue\(entry,\s*"thumbnail"\)/],
 ];
 
 for (const [label, pattern] of expectations) {
@@ -52,6 +48,12 @@ for (const [label, pattern] of expectations) {
 const forbiddenHtml = [
   ["entry form", /id="entry-form"/],
   ["localStorage", /localStorage/],
+  ["youtube oembed endpoint", /https:\/\/www\.youtube\.com\/oembed/],
+  ["oembed metadata cache", /oEmbedMetadataCache/],
+  ["oembed pending urls", /oEmbedPendingUrls/],
+  ["oembed loader", /loadOEmbedMetadata/],
+  ["oembed endpoint helper", /getYoutubeOEmbedUrl/],
+  ["oembed author rendering", /renderHistoryAuthor|record-author/],
   ["edit action", /data-action="edit"|editEntry|編輯/],
   ["delete action", /data-action="delete"|deleteEntry|刪除/],
   ["JSON export button", /id="export-json"|exportEntries|匯出 JSON/],
@@ -69,6 +71,12 @@ assert.match(data, /window\.dailySportEntries\s*=\s*\[/, "Missing data array");
 assert.match(data, /date:\s*"2026-07-03"/, "Missing seeded date");
 assert.match(data, /url:\s*"https:\/\/www\.youtube\.com\/watch\?v=HuYoYJX9pgU"/, "Missing seeded URL");
 assert.match(data, /description:/, "Missing description field");
+assert.match(data, /thumbnail:/, "Missing thumbnail field");
+assert.match(
+  data,
+  /thumbnail:\s*"https:\/\/i\.ytimg\.com\/vi\/HuYoYJX9pgU\/hqdefault\.jpg"/,
+  "Missing seeded thumbnail URL",
+);
 
 const inlineScripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((match) => match[1]);
 assert.equal(inlineScripts.length, 1, "Expected one inline app script");
@@ -222,18 +230,21 @@ const smokeEntries = [
     date: "2026-07-03",
     title: "First same day entry",
     url: "https://youtu.be/FirstSame1A?si=abc123&feature=share",
+    thumbnail: "https://cdn.example.test/first-same-day.jpg",
     description: "Earlier same-day entry should stay in history",
   },
   {
     date: "2026-07-02",
     title: "Yesterday history entry",
     url: "https://example.test/yesterday",
+    thumbnail: "https://cdn.example.test/yesterday.jpg",
     description: "Regular history entry",
   },
   {
     date: "2026-07-03",
     title: "Last same day entry",
     url: "https://www.youtube.com/watch?v=LastSame99A&feature=share",
+    thumbnail: "https://cdn.example.test/last-same-day.jpg",
     description: "today-only-keyword",
   },
 ];
@@ -276,131 +287,60 @@ assert.match(smokeToday, /allowfullscreen/, "Today iframe should allow fullscree
 assert.match(smokeToday, /referrerpolicy="strict-origin-when-cross-origin"/, "Today iframe should include a referrer policy");
 assert.doesNotMatch(smokeHistory, /<iframe\b/, "History list should not render iframe embeds");
 
-const oEmbedRequests = [];
-const oEmbedApp = runApp(smokeEntries, "2026-07-03", {
+const thumbnailFetchRequests = [];
+const thumbnailApp = runApp(smokeEntries, "2026-07-03", {
   fetch: async (requestUrl) => {
-    oEmbedRequests.push(String(requestUrl));
-    return {
-      ok: true,
-      status: 200,
-      async json() {
-        return {
-          title: "Remote oEmbed title",
-          author_name: "Remote Trainer",
-          author_url: "https://www.youtube.com/@remote-trainer",
-          thumbnail_url: "https://i.ytimg.com/vi/FirstSame1A/hqdefault.jpg",
-          thumbnail_width: 480,
-          thumbnail_height: 360,
-        };
-      },
-    };
+    thumbnailFetchRequests.push(String(requestUrl));
+    throw new Error("History thumbnails should not use fetch");
   },
 });
 
-const oEmbedTodayElement = oEmbedApp.elements.get("#today-entry");
-oEmbedTodayElement.innerHTML = `${oEmbedTodayElement.innerHTML}<!-- active-playback-sentinel -->`;
-const oEmbedTodayBeforeMetadata = oEmbedTodayElement.innerHTML;
-
 await flushAsyncWork();
 
-const oEmbedHistory = oEmbedApp.elements.get("#history-list").innerHTML;
-assert.equal(
-  oEmbedTodayElement.innerHTML,
-  oEmbedTodayBeforeMetadata,
-  "oEmbed metadata resolution should not rebuild the active today iframe",
-);
-assert.equal(oEmbedRequests.length, 1, "Only YouTube history rows should request oEmbed metadata");
-
-const requestedOEmbedUrl = new URL(oEmbedRequests[0]);
-assert.equal(
-  `${requestedOEmbedUrl.origin}${requestedOEmbedUrl.pathname}`,
-  "https://www.youtube.com/oembed",
-  "oEmbed requests should use the YouTube oEmbed endpoint",
-);
-assert.equal(
-  requestedOEmbedUrl.searchParams.get("url"),
-  "https://youtu.be/FirstSame1A?si=abc123&feature=share",
-  "oEmbed requests should preserve the original video URL as the url parameter",
-);
+const thumbnailHistory = thumbnailApp.elements.get("#history-list").innerHTML;
+assert.equal(thumbnailFetchRequests.length, 0, "History thumbnails should not call fetch");
+assert.match(thumbnailHistory, /class="record-thumbnail"/, "History rows with thumbnail should render an image");
 assert.match(
-  oEmbedRequests[0],
-  /[?&]url=https%3A%2F%2Fyoutu\.be%2FFirstSame1A%3Fsi%3Dabc123%26feature%3Dshare(?:&|$)/,
-  "oEmbed requests should percent-encode the original video URL",
+  thumbnailHistory,
+  /src="https:\/\/cdn\.example\.test\/first-same-day\.jpg"/,
+  "History thumbnail should use entry.thumbnail",
 );
-assert.equal(requestedOEmbedUrl.searchParams.get("format"), "json", "oEmbed requests should ask for JSON");
-assert.match(oEmbedHistory, /class="record-thumbnail"/, "Successful oEmbed metadata should render a thumbnail image");
-assert.match(oEmbedHistory, /src="https:\/\/i\.ytimg\.com\/vi\/FirstSame1A\/hqdefault\.jpg"/, "Thumbnail should use oEmbed thumbnail_url");
-assert.match(oEmbedHistory, /alt="First same day entry"/, "Thumbnail alt text should use the local title");
-assert.match(oEmbedHistory, /Remote Trainer/, "Successful oEmbed metadata should render author_name");
-assert.doesNotMatch(oEmbedHistory, /Remote oEmbed title/, "Local data.js title should stay authoritative for visible row title");
+assert.match(thumbnailHistory, /alt="First same day entry"/, "Thumbnail alt text should use the local title");
+assert.match(thumbnailHistory, /First same day entry/, "Local data.js title should stay authoritative");
+assert.doesNotMatch(thumbnailHistory, /Remote Trainer|Remote oEmbed title/, "Runtime metadata should not render");
 
-const failingOEmbedRequests = [];
-const failingOEmbedApp = runApp(smokeEntries, "2026-07-03", {
-  fetch: async (requestUrl) => {
-    failingOEmbedRequests.push(String(requestUrl));
-    return {
-      ok: false,
-      status: 404,
-      async json() {
-        return {};
-      },
-    };
-  },
-});
-
-await flushAsyncWork();
-
-const failingOEmbedHistory = failingOEmbedApp.elements.get("#history-list").innerHTML;
-assert.equal(failingOEmbedRequests.length, 1, "Failed oEmbed requests should still be attempted once per YouTube history URL");
-assert.match(failingOEmbedHistory, /First same day entry/, "Failed oEmbed should preserve the local title");
-assert.match(failingOEmbedHistory, /Earlier same-day entry should stay in history/, "Failed oEmbed should preserve the local description");
-assert.doesNotMatch(failingOEmbedHistory, /record-thumbnail/, "Failed oEmbed should not render a broken thumbnail image");
-assert.doesNotMatch(failingOEmbedHistory, /<img\b/, "Failed oEmbed should not render a broken image element");
-
-const nonYoutubeFetchRequests = [];
-const nonYoutubeHistoryApp = runApp(
+const missingThumbnailApp = runApp(
   [
     {
       date: "2026-07-03",
       title: "Today workout",
       url: "https://www.youtube.com/watch?v=TodayOnly1A",
-      description: "Today card is not enriched by oEmbed",
+      thumbnail: "https://cdn.example.test/today.jpg",
+      description: "Today card keeps iframe behavior",
     },
     {
       date: "2026-07-02",
-      title: "External history workout",
+      title: "History without thumbnail",
       url: "https://example.test/history",
-      description: "External history URLs should not call YouTube oEmbed",
+      description: "Missing thumbnails should use the placeholder",
     },
   ],
   "2026-07-03",
   {
     fetch: async (requestUrl) => {
-      nonYoutubeFetchRequests.push(String(requestUrl));
-      return {
-        ok: true,
-        status: 200,
-        async json() {
-          return {};
-        },
-      };
+      throw new Error(`Missing thumbnail should not fetch ${requestUrl}`);
     },
   },
 );
 
 await flushAsyncWork();
 
-assert.equal(nonYoutubeFetchRequests.length, 0, "Non-YouTube history URLs should not call YouTube oEmbed");
-assert.match(
-  nonYoutubeHistoryApp.elements.get("#history-list").innerHTML,
-  /External history workout/,
-  "Non-YouTube history rows should still render local content",
-);
-assert.match(
-  nonYoutubeHistoryApp.elements.get("#history-list").innerHTML,
-  /External history URLs should not call YouTube oEmbed/,
-  "Non-YouTube history rows should preserve the local description",
-);
+const missingThumbnailHistory = missingThumbnailApp.elements.get("#history-list").innerHTML;
+assert.match(missingThumbnailHistory, /History without thumbnail/, "Rows without thumbnail should still render local content");
+assert.match(missingThumbnailHistory, /Missing thumbnails should use the placeholder/, "Rows without thumbnail should preserve description");
+assert.match(missingThumbnailHistory, /record-media-placeholder/, "Rows without thumbnail should render a placeholder");
+assert.doesNotMatch(missingThumbnailHistory, /record-thumbnail/, "Rows without thumbnail should not render a thumbnail image");
+assert.doesNotMatch(missingThumbnailHistory, /<img\b/, "Rows without thumbnail should not render a broken image element");
 
 smokeApp.search("today-only-keyword");
 assert.match(
@@ -450,6 +390,7 @@ const missingUrlApp = runApp([
     date: "2026-07-02",
     title: "History missing URL",
     url: "",
+    thumbnail: "https://cdn.example.test/history-missing-url.jpg",
     description: "No link should be rendered",
   },
 ]);
@@ -459,6 +400,11 @@ assert.doesNotMatch(missingUrlApp.elements.get("#history-list").innerHTML, /<a\b
 assert.match(missingUrlApp.elements.get("#today-entry").innerHTML, /Today missing URL/, "Today title text should still render");
 assert.match(missingUrlApp.elements.get("#history-list").innerHTML, /History missing URL/, "History title text should still render");
 assert.doesNotMatch(missingUrlApp.elements.get("#today-entry").innerHTML, /<iframe\b/, "Missing today URL should not render an iframe");
+assert.match(
+  missingUrlApp.elements.get("#history-list").innerHTML,
+  /src="https:\/\/cdn\.example\.test\/history-missing-url\.jpg"/,
+  "History thumbnails without URLs should render without an empty link",
+);
 
 assert.equal(countMatches(missingUrlApp.elements.get("#history-list").innerHTML, /<article class="record">/g), 1);
 
