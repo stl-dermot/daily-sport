@@ -77,6 +77,19 @@ assert.match(
   /thumbnail:\s*"https:\/\/i\.ytimg\.com\/vi\/HuYoYJX9pgU\/hqdefault\.jpg"/,
   "Missing seeded thumbnail URL",
 );
+assert.match(
+  data,
+  /thumbnail:\s*"https:\/\/i\.ytimg\.com\/vi\/5LwN80lJvZc\/hqdefault\.jpg"/,
+  "Missing second seeded thumbnail URL",
+);
+
+const dataContext = createContext({ window: {} });
+new Script(data, { filename: "data.js" }).runInContext(dataContext);
+const seededEntries = dataContext.window.dailySportEntries;
+assert.ok(Array.isArray(seededEntries), "Seed data should assign window.dailySportEntries");
+for (const [index, entry] of seededEntries.entries()) {
+  assert.match(String(entry.thumbnail ?? ""), /\S/, `Seed entry ${index + 1} should have a non-empty thumbnail`);
+}
 
 const inlineScripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((match) => match[1]);
 assert.equal(inlineScripts.length, 1, "Expected one inline app script");
@@ -306,6 +319,12 @@ assert.match(
   "History thumbnail should use entry.thumbnail",
 );
 assert.match(thumbnailHistory, /alt="First same day entry"/, "Thumbnail alt text should use the local title");
+assert.match(
+  thumbnailHistory,
+  /src="https:\/\/cdn\.example\.test\/yesterday\.jpg"/,
+  "External history thumbnail should use entry.thumbnail",
+);
+assert.match(thumbnailHistory, /alt="Yesterday history entry"/, "External thumbnail alt text should use the local title");
 assert.match(thumbnailHistory, /First same day entry/, "Local data.js title should stay authoritative");
 assert.doesNotMatch(thumbnailHistory, /Remote Trainer|Remote oEmbed title/, "Runtime metadata should not render");
 
