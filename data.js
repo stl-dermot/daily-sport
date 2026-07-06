@@ -14,5 +14,13 @@ window.dailySportEntries = [
     url: "https://www.youtube.com/watch?v=5LwN80lJvZc",
     thumbnail: "https://i.ytimg.com/vi/5LwN80lJvZc/hqdefault.jpg",
     description: "今天換一支全身燃脂操，一樣全程站著、零跳躍、零器材，膝蓋友善指數依舊滿分！強度屬於中等有氧+肌力混合，動作不重複，還貼心附上暖身跟收操，新手老手都能輕鬆跟上，男女同事都適合一起流汗～"
+  },
+  {
+    id: "2026-07-06-ofqip9roa8m",
+    date: "2026-07-06",
+    title: "30 MIN LOW IMPACT Knee Friendly Workout - No Equipment - No Jumping - No Repeat - Full Body",
+    url: "https://www.youtube.com/watch?v=ofQIP9Roa8M",
+    thumbnail: "https://i.ytimg.com/vi/ofQIP9Roa8M/hqdefault.jpg",
+    description: "這支全身操主打「超級膝蓋友善」，全程零跳躍、零器材，地板跟關節都能安心過一天！強度中等偏溫和，動作不重複也不無聊，很適合下午想動一動、又不想被彈跳嚇到心臟的同事們一起輕鬆跟練～"
   }
 ];
