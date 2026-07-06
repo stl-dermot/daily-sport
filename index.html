@@ -459,13 +459,6 @@
         color: var(--primary);
       }
 
-      .record-author {
-        margin: 0 0 5px;
-        color: var(--primary-strong);
-        font-size: 0.86rem;
-        font-weight: 700;
-      }
-
       .record-description {
         margin: 0;
         color: var(--muted);
@@ -577,8 +570,6 @@
     <script src="data.js"></script>
     <script>
       const entries = Array.isArray(window.dailySportEntries) ? window.dailySportEntries : [];
-      const oEmbedMetadataCache = new Map();
-      const oEmbedPendingUrls = new Set();
 
       const elements = {
         today: document.querySelector("#today-entry"),
@@ -738,60 +729,6 @@
         return videoId ? `https://www.youtube.com/embed/${videoId}` : "";
       }
 
-      function getYoutubeOEmbedUrl(url) {
-        const endpoint = new URL("https://www.youtube.com/oembed");
-        endpoint.searchParams.set("url", url);
-        endpoint.searchParams.set("format", "json");
-        return endpoint.toString();
-      }
-
-      function getLoadedOEmbedMetadata(entry) {
-        const url = getEntryValue(entry, "url");
-        const cached = oEmbedMetadataCache.get(url);
-        return cached?.status === "loaded" ? cached.metadata : null;
-      }
-
-      function canLoadOEmbedMetadata(entry) {
-        const url = getEntryValue(entry, "url");
-        return Boolean(url && getYoutubeVideoId(url) && typeof fetch === "function");
-      }
-
-      function loadOEmbedMetadata(entry) {
-        const url = getEntryValue(entry, "url");
-
-        if (!canLoadOEmbedMetadata(entry) || oEmbedMetadataCache.has(url) || oEmbedPendingUrls.has(url)) {
-          return;
-        }
-
-        oEmbedPendingUrls.add(url);
-
-        fetch(getYoutubeOEmbedUrl(url))
-          .then((response) => {
-            if (!response.ok) {
-              throw new Error(`YouTube oEmbed failed with ${response.status}`);
-            }
-            return response.json();
-          })
-          .then(
-            (metadata) => {
-              oEmbedMetadataCache.set(url, {
-                status: "loaded",
-                metadata: metadata && typeof metadata === "object" ? metadata : {},
-              });
-              oEmbedPendingUrls.delete(url);
-              renderCurrentHistoryEntries();
-            },
-            () => {
-              oEmbedMetadataCache.set(url, { status: "failed" });
-              oEmbedPendingUrls.delete(url);
-              renderCurrentHistoryEntries();
-            },
-          )
-          .finally(() => {
-            oEmbedPendingUrls.delete(url);
-          });
-      }
-
       function renderTodayEntry(entry) {
         if (!entry) {
           elements.today.innerHTML = '<div class="empty-state">今天還沒有運動影片</div>';
@@ -838,19 +775,24 @@
 
       function renderHistoryMedia(entry) {
         const url = getEntryValue(entry, "url");
-        const metadata = getLoadedOEmbedMetadata(entry);
-        const thumbnailUrl = getEntryValue(metadata, "thumbnail_url");
+        const thumbnailUrl = getEntryValue(entry, "thumbnail");
         const title = getEntryValue(entry, "title");
 
         if (thumbnailUrl) {
+          const thumbnailImage = `<img class="record-thumbnail" src="${escapeHtml(thumbnailUrl)}" alt="${escapeHtml(title)}" loading="lazy">`;
+
+          if (!url) {
+            return `<div class="record-media">${thumbnailImage}</div>`;
+          }
+
           return `
             <a class="record-media" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">
-              <img class="record-thumbnail" src="${escapeHtml(thumbnailUrl)}" alt="${escapeHtml(title)}" loading="lazy">
+              ${thumbnailImage}
             </a>
           `;
         }
 
-        const label = getYoutubeVideoId(url) ? "載入縮圖" : "影片";
+        const label = getYoutubeVideoId(url) ? "縮圖未設定" : "影片";
 
         if (url) {
           return `
@@ -865,13 +807,6 @@
             <span>${escapeHtml(label)}</span>
           </div>
         `;
-      }
-
-      function renderHistoryAuthor(entry) {
-        const metadata = getLoadedOEmbedMetadata(entry);
-        const authorName = getEntryValue(metadata, "author_name");
-
-        return authorName ? `<p class="record-author">${escapeHtml(authorName)}</p>` : "";
       }
 
       function renderHistoryEntries(items, query) {
@@ -895,15 +830,12 @@
               ${renderHistoryMedia(entry)}
               <div class="record-main">
                 ${renderEntryTitle(entry, "record-title")}
-                ${renderHistoryAuthor(entry)}
                 <p class="record-description">${escapeHtml(getEntryValue(entry, "description"))}</p>
               </div>
               <span class="record-date">${escapeHtml(getEntryValue(entry, "date"))}</span>
             </article>
           `)
           .join("");
-
-        filtered.forEach(loadOEmbedMetadata);
       }
 
       function renderCurrentHistoryEntries() {
