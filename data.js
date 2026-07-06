@@ -16,11 +16,11 @@ window.dailySportEntries = [
     description: "今天換一支全身燃脂操，一樣全程站著、零跳躍、零器材，膝蓋友善指數依舊滿分！強度屬於中等有氧+肌力混合，動作不重複，還貼心附上暖身跟收操，新手老手都能輕鬆跟上，男女同事都適合一起流汗～"
   },
   {
-    id: "2026-07-06-ofqip9roa8m",
+    id: "2026-07-06-bqc8ah38qc8",
     date: "2026-07-06",
-    title: "30 MIN LOW IMPACT Knee Friendly Workout - No Equipment - No Jumping - No Repeat - Full Body",
-    url: "https://www.youtube.com/watch?v=ofQIP9Roa8M",
-    thumbnail: "https://i.ytimg.com/vi/ofQIP9Roa8M/hqdefault.jpg",
-    description: "這支全身操主打「超級膝蓋友善」，全程零跳躍、零器材，地板跟關節都能安心過一天！強度中等偏溫和，動作不重複也不無聊，很適合下午想動一動、又不想被彈跳嚇到心臟的同事們一起輕鬆跟練～"
+    title: "Low Impact Total Body Cardio Workout at Home for Beginners - 30 Minute Standing Cardio No Jumping",
+    url: "https://www.youtube.com/watch?v=BQc8aH38qc8",
+    thumbnail: "https://i.ytimg.com/vi/BQc8aH38qc8/hqdefault.jpg",
+    description: "今天換 HASfit 的男女教練組合帶操，全程站立、零跳躍、零器材，對膝蓋和地板都很溫柔！強度屬於新手友善的中低強度有氧，動作簡單好跟，不管平常有沒有運動習慣的男女同事都能輕鬆一起流汗～"
   }
 ];
