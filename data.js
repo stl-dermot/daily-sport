@@ -32,11 +32,11 @@ window.dailySportEntries = [
     description: "今天來一支塔巴塔全身操，一樣走「零跳躍、零器材」路線，膝蓋和地板都能安心休息！強度是中等偏上的間歇式燃脂，20秒衝刺配10秒喘息，節奏明快但不會讓人喘到崩潰，很適合下午想提神又怕太激烈的男女同事一起跟練～"
   },
   {
-    id: "2026-07-07-yelfac9xizq",
+    id: "2026-07-07-3rdsdh5fvey",
     date: "2026-07-07",
-    title: "30 min Low Impact FULL BODY Workout (No Equipment + No Jumping)",
-    url: "https://www.youtube.com/watch?v=yeLfaC9XIzQ",
-    thumbnail: "https://i.ytimg.com/vi/yeLfaC9XIzQ/hqdefault.jpg",
-    description: "今天這支全身燃脂操一樣主打「零跳躍、零器材」，全程站著動，膝蓋和辦公室地板都可以安心無壓力！強度屬於溫和到中等，動作簡單好跟，不會讓人喘到懷疑人生，不管是運動小白還是老手，男女同事都能輕鬆一起流汗放電～"
+    title: "30 min FULL BODY WORKOUT for TOTAL BEGINNERS (Achievable, All Standing, Low Impact, No Equipment)",
+    url: "https://www.youtube.com/watch?v=3rdsdh5fVeY",
+    thumbnail: "https://i.ytimg.com/vi/3rdsdh5fVeY/hqdefault.jpg",
+    description: "這支是專為新手設計的全身操，從頭到尾「完全站著」，沒有任何躺地板、撐地的動作，膝蓋和辦公室地板都能放一百個心！強度溫和好上手，動作簡單不複雜，不管平常有沒有運動習慣的男女同事都能輕鬆跟著做～"
   }
 ];
