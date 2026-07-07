@@ -569,7 +569,7 @@
 
     <script src="data.js"></script>
     <script>
-      const entries = Array.isArray(window.dailySportEntries) ? window.dailySportEntries : [];
+      let entries = [];
 
       const elements = {
         today: document.querySelector("#today-entry"),
@@ -609,6 +609,10 @@
 
       function getEntryValue(entry, key) {
         return entry?.[key] == null ? "" : String(entry[key]);
+      }
+
+      function normalizeEntries(value) {
+        return Array.isArray(value) ? value : [];
       }
 
       function sortEntries(items) {
@@ -852,10 +856,25 @@
         renderHistoryEntries(historyEntries, query);
       }
 
+      function setEntries(nextEntries) {
+        entries = normalizeEntries(nextEntries);
+        render();
+      }
+
+      function loadEntries() {
+        setEntries(window.dailySportEntries);
+
+        if (typeof window.dailySportEntriesReady?.then === "function") {
+          window.dailySportEntriesReady.then(setEntries).catch(() => {
+            setEntries(window.dailySportEntries);
+          });
+        }
+      }
+
       elements.search.addEventListener("input", render);
       elements.themeToggle.addEventListener("click", toggleTheme);
       updateThemeToggle();
-      render();
+      loadEntries();
     </script>
   </body>
 </html>

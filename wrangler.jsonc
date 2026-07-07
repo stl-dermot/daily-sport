@@ -1,0 +1,12 @@
+{
+  "name": "daily-sport-data-api",
+  "main": "worker.js",
+  "compatibility_date": "2026-07-07",
+  "workers_dev": true,
+  "kv_namespaces": [
+    {
+      "binding": "DAILY_SPORT_DATA",
+      "id": "38612c3037d44f66b7f7edf8614fec4b"
+    }
+  ]
+}

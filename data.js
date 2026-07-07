@@ -40,3 +40,40 @@ window.dailySportEntries = [
     description: "這支是專為新手設計的全身操，從頭到尾「完全站著」，沒有任何躺地板、撐地的動作，膝蓋和辦公室地板都能放一百個心！強度溫和好上手，動作簡單不複雜，不管平常有沒有運動習慣的男女同事都能輕鬆跟著做～"
   }
 ];
+
+const DAILY_SPORT_DATA_ENDPOINT = "https://daily-sport-data-api.dermot-c68.workers.dev/entries";
+const dailySportSeedEntries = window.dailySportEntries.map((entry) => ({ ...entry }));
+window.dailySportEntriesSource = "seed";
+
+window.dailySportEntriesReady = (async () => {
+  if (typeof fetch !== "function") {
+    return dailySportSeedEntries;
+  }
+
+  try {
+    const response = await fetch(DAILY_SPORT_DATA_ENDPOINT, {
+      headers: {
+        Accept: "application/json"
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Daily sport KV request failed with ${response.status}`);
+    }
+
+    const entries = await response.json();
+
+    if (!Array.isArray(entries)) {
+      throw new Error("Daily sport KV payload must be an array");
+    }
+
+    window.dailySportEntries = entries;
+    window.dailySportEntriesSource = "remote";
+    return entries;
+  } catch (error) {
+    globalThis.console?.warn?.("Falling back to bundled daily sport entries.", error);
+    window.dailySportEntries = dailySportSeedEntries;
+    window.dailySportEntriesSource = "seed";
+    return dailySportSeedEntries;
+  }
+})();

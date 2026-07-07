@@ -29,6 +29,9 @@ const expectations = [
   ["focus visible outline offset", /outline-offset:\s*3px/],
   ["focus visible halo", /box-shadow:\s*0 0 0 4px color-mix\(in srgb,\s*var\(--focus-ring\)\s*22%,\s*transparent\)/],
   ["data source usage", /window\.dailySportEntries/],
+  ["remote data readiness promise", /dailySportEntriesReady/],
+  ["entry setter", /function setEntries/],
+  ["entry loader", /function loadEntries/],
   ["today entry index helper", /findTodayEntryIndex/],
   ["youtube video id helper", /function getYoutubeVideoId/],
   ["youtube embed helper", /function getYoutubeEmbedUrl/],
@@ -69,6 +72,12 @@ assert.doesNotMatch(html, />影片列表</, "Old list heading should be renamed"
 assert.doesNotMatch(html, /播放時長|getDuration|duration/i, "History metadata should not include duration UI or APIs");
 
 assert.match(data, /window\.dailySportEntries\s*=\s*\[/, "Missing data array");
+assert.match(
+  data,
+  /DAILY_SPORT_DATA_ENDPOINT\s*=\s*"https:\/\/daily-sport-data-api\.dermot-c68\.workers\.dev\/entries"/,
+  "Missing Cloudflare KV-backed data endpoint",
+);
+assert.match(data, /window\.dailySportEntriesReady\s*=/, "Missing async data loader");
 assert.match(data, /date:\s*"2026-07-03"/, "Missing seeded date");
 assert.match(data, /url:\s*"https:\/\/www\.youtube\.com\/watch\?v=HuYoYJX9pgU"/, "Missing seeded URL");
 assert.match(data, /description:/, "Missing description field");
@@ -88,9 +97,75 @@ const dataContext = createContext({ window: {} });
 new Script(data, { filename: "data.js" }).runInContext(dataContext);
 const seededEntries = dataContext.window.dailySportEntries;
 assert.ok(Array.isArray(seededEntries), "Seed data should assign window.dailySportEntries");
+assert.equal(dataContext.window.dailySportEntriesSource, "seed", "Initial data source should be seed");
+assert.ok(dataContext.window.dailySportEntriesReady, "Seed data should expose a readiness promise");
+assert.deepEqual(
+  await dataContext.window.dailySportEntriesReady,
+  seededEntries,
+  "Missing fetch should keep bundled seed entries",
+);
 for (const [index, entry] of seededEntries.entries()) {
   assert.match(String(entry.thumbnail ?? ""), /\S/, `Seed entry ${index + 1} should have a non-empty thumbnail`);
 }
+
+const remoteEntries = [
+  {
+    id: "remote-entry",
+    date: "2026-07-04",
+    title: "Remote KV workout",
+    url: "https://www.youtube.com/watch?v=RemoteOnly1",
+    thumbnail: "https://cdn.example.test/remote.jpg",
+    description: "Remote entries should replace bundled seed data",
+  },
+];
+const dataFetchRequests = [];
+const remoteDataContext = createContext({
+  window: {},
+  fetch: async (requestUrl, options) => {
+    dataFetchRequests.push({ requestUrl: String(requestUrl), options });
+    return {
+      ok: true,
+      json: async () => remoteEntries,
+    };
+  },
+});
+
+new Script(data, { filename: "data.js" }).runInContext(remoteDataContext);
+
+assert.deepEqual(
+  await remoteDataContext.window.dailySportEntriesReady,
+  remoteEntries,
+  "Cloudflare KV entries should be returned by the readiness promise",
+);
+assert.deepEqual(
+  remoteDataContext.window.dailySportEntries,
+  remoteEntries,
+  "Cloudflare KV entries should replace window.dailySportEntries",
+);
+assert.equal(remoteDataContext.window.dailySportEntriesSource, "remote", "Successful KV load should mark data source remote");
+assert.deepEqual(
+  dataFetchRequests.map((request) => request.requestUrl),
+  ["https://daily-sport-data-api.dermot-c68.workers.dev/entries"],
+  "Data loader should fetch the Cloudflare Worker endpoint",
+);
+assert.equal(dataFetchRequests[0].options.headers.Accept, "application/json", "Data loader should request JSON");
+
+const invalidRemoteDataContext = createContext({
+  window: {},
+  fetch: async () => ({
+    ok: true,
+    json: async () => ({ entries: remoteEntries }),
+  }),
+});
+
+new Script(data, { filename: "data.js" }).runInContext(invalidRemoteDataContext);
+
+assert.deepEqual(
+  await invalidRemoteDataContext.window.dailySportEntriesReady,
+  invalidRemoteDataContext.window.dailySportEntries,
+  "Invalid remote payloads should fall back to bundled seed entries",
+);
+assert.equal(invalidRemoteDataContext.window.dailySportEntriesSource, "seed", "Invalid remote payloads should mark data source seed");
 
 const inlineScripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((match) => match[1]);
 assert.equal(inlineScripts.length, 1, "Expected one inline app script");
