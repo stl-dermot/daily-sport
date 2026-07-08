@@ -117,8 +117,10 @@ const deployExpectations = [
   ["upload pages artifact", /uses:\s*actions\/upload-pages-artifact@v5/],
   ["deploy pages", /uses:\s*actions\/deploy-pages@v5/],
   ["publish directory", /path:\s*\.\/_site/],
+  ["create assets directory", /mkdir -p _site\/assets/],
   ["copy index", /cp index\.html _site\/index\.html/],
   ["copy data", /cp data\.js _site\/data\.js/],
+  ["copy banner asset", /cp assets\/banner-cats-gym\.png _site\/assets\/banner-cats-gym\.png/],
 ];
 
 for (const [label, pattern] of deployExpectations) {
@@ -132,9 +134,10 @@ const artifactCommands = prepareArtifactStep
   .filter((line) => line && !line.startsWith("- name:") && !line.startsWith("run:"));
 const expectedArtifactCommands = [
   "rm -rf _site",
-  "mkdir -p _site",
+  "mkdir -p _site/assets",
   "cp index.html _site/index.html",
   "cp data.js _site/data.js",
+  "cp assets/banner-cats-gym.png _site/assets/banner-cats-gym.png",
 ];
 
 assert.deepEqual(artifactCommands, expectedArtifactCommands, "Pages artifact must only include deployable site files");
@@ -146,13 +149,22 @@ const deployCopyCommands = deployJob
 
 assert.deepEqual(
   deployCopyCommands,
-  ["cp index.html _site/index.html", "cp data.js _site/data.js"],
+  [
+    "cp index.html _site/index.html",
+    "cp data.js _site/data.js",
+    "cp assets/banner-cats-gym.png _site/assets/banner-cats-gym.png",
+  ],
   "Pages artifact copy commands must only publish deployable site files",
 );
 
 const forbiddenArtifactCopies = [
   ["root copy artifact", /\bcp\b[^\n]*(?:-\S*\s+)*(?:["']?\.\/?["']?)\s+(?:\.\/)?_site(?:\b|\/)/],
   ["root rsync artifact", /\brsync\b[^\n]*(?:["']?\.\/?["']?)\s+(?:\.\/)?_site(?:\b|\/)/],
+  [
+    "broad assets copy artifact",
+    /^\s*cp\b(?!\s+assets\/banner-cats-gym\.png\s+_site\/assets\/banner-cats-gym\.png\s*$)[^\n]*(?:["']?\.\/?)?assets(?:\b|\/)/m,
+  ],
+  ["assets rsync artifact", /\brsync\b[^\n]*(?:["']?\.\/?)?assets(?:\b|\/)/],
   ["tests copy artifact", /\bcp\b[^\n]*(?:["']?\.\/)?tests(?:\b|\/)/],
   ["docs copy artifact", /\bcp\b[^\n]*(?:["']?\.\/)?docs(?:\b|\/)/],
   ["superpowers copy artifact", /\bcp\b[^\n]*(?:["']?\.\/)?\.superpowers(?:\b|\/)/],
