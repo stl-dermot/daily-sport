@@ -22,6 +22,7 @@ const expectations = [
   ["full bleed banner placement", /<main>\s*<div class="app-shell app-shell--header">[\s\S]*?<\/div>\s*<section\b(?=[^>]*\bclass="(?:[^"]*\s)?hero-banner(?:\s[^"]*)?")/],
   ["banner section", /<section\b(?=[^>]*\bclass="(?:[^"]*\s)?hero-banner(?:\s[^"]*)?")/],
   ["banner image", /<img\b(?=[^>]*\bclass="(?:[^"]*\s)?hero-banner-image(?:\s[^"]*)?")(?=[^>]*\bsrc="assets\/banner-cats-gym\.png")/],
+  ["banner image dimensions", /<img\b(?=[^>]*\bsrc="assets\/banner-cats-gym\.png")(?=[^>]*\bwidth="2472")(?=[^>]*\bheight="724")/],
   ["banner alt text", /<img\b(?=[^>]*\bsrc="assets\/banner-cats-gym\.png")(?=[^>]*\balt="[^"]*貓[^"]*健身[^"]*")/],
   ["wall theme token", /--theme-source-wall:\s*#d0aa7b/i],
   ["floor theme token", /--theme-source-floor:\s*#1d1d1f/i],
@@ -63,6 +64,9 @@ for (const [label, pattern] of expectations) {
 }
 
 assert.ok(existsSync(bannerAsset), "Banner asset should be committed at assets/banner-cats-gym.png");
+const bannerData = readFileSync(bannerAsset);
+assert.equal(bannerData.readUInt32BE(16), 2472, "Banner asset width should be extended to 2472px");
+assert.equal(bannerData.readUInt32BE(20), 724, "Banner asset height should stay 724px");
 
 const forbiddenHtml = [
   ["entry form", /id="entry-form"/],
