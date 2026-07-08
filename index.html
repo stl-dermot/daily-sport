@@ -8,51 +8,71 @@
       :root,
       html[data-theme="light"] {
         color-scheme: light;
-        --bg: #f6f7fb;
-        --surface: #ffffff;
-        --surface-muted: #f0f2f7;
-        --text: #202433;
-        --muted: #666d7e;
-        --line: #dfe3ec;
-        --primary: #6254ff;
-        --primary-strong: #4435db;
-        --accent-soft: #f1efff;
-        --input-bg: #ffffff;
-        --chip-bg: #ffffff;
-        --today-bg: #ffffff;
-        --today-text: #202433;
-        --today-muted: #6f688c;
-        --today-icon-bg: #f1efff;
-        --row-bg: #ffffff;
-        --row-hover: #f9f9ff;
-        --empty-bg: #fbfcff;
-        --focus-ring: #4d3dff;
-        --shadow: 0 16px 36px rgba(37, 43, 61, 0.09);
-        --chip-shadow: 0 8px 18px rgba(37, 43, 61, 0.06);
+        --theme-source-wall: #d0aa7b;
+        --theme-source-floor: #1d1d1f;
+        --bg: #d0aa7b;
+        --bg-soft: #d8b886;
+        --surface: rgba(226, 190, 130, 0.74);
+        --surface-muted: rgba(95, 73, 43, 0.2);
+        --text: #171612;
+        --muted: #4c4336;
+        --line: rgba(93, 69, 37, 0.46);
+        --primary: #7fa34a;
+        --primary-strong: #2f4a27;
+        --accent-orange: #f4a53d;
+        --accent-soft: rgba(244, 165, 61, 0.18);
+        --input-bg: rgba(226, 190, 130, 0.58);
+        --chip-bg: #20231f;
+        --chip-text: #f4ead8;
+        --chip-muted: #d5bf8d;
+        --today-bg: rgba(226, 190, 130, 0.4);
+        --today-text: #171612;
+        --today-muted: #4c4336;
+        --today-icon-bg: rgba(127, 163, 74, 0.2);
+        --row-bg: #151b17;
+        --row-hover: #1f281f;
+        --row-text: #f4ead8;
+        --row-muted: #b9aa91;
+        --empty-bg: rgba(226, 190, 130, 0.32);
+        --date-bg: #5c4b27;
+        --date-text: #f4d38a;
+        --focus-ring: #2f4a27;
+        --shadow: 0 16px 32px rgba(55, 37, 18, 0.2);
+        --chip-shadow: 0 8px 18px rgba(36, 27, 16, 0.2);
       }
 
       @media (prefers-color-scheme: dark) {
         :root {
           color-scheme: dark;
-          --bg: #090910;
-          --surface: #11111a;
-          --surface-muted: #1d1b29;
-          --text: #f5f3ff;
-          --muted: #a7a1ba;
-          --line: #29263a;
-          --primary: #8b7cff;
-          --primary-strong: #c8c1ff;
-          --accent-soft: #211b3c;
-          --input-bg: #15141e;
-          --chip-bg: #171522;
-          --today-bg: #20193d;
-          --today-text: #fbfaff;
-          --today-muted: #c2bce9;
-          --today-icon-bg: rgba(139, 124, 255, 0.18);
-          --row-bg: #15131e;
-          --row-hover: #1c1929;
-          --empty-bg: #12111a;
-          --focus-ring: #d9d2ff;
+          --theme-source-wall: #d0aa7b;
+          --theme-source-floor: #1d1d1f;
+          --bg: #1d1d1f;
+          --bg-soft: #242628;
+          --surface: rgba(29, 31, 29, 0.92);
+          --surface-muted: rgba(111, 90, 53, 0.26);
+          --text: #f4ead8;
+          --muted: #b9aa91;
+          --line: rgba(111, 90, 53, 0.5);
+          --primary: #7fa34a;
+          --primary-strong: #a8c970;
+          --accent-orange: #f4a53d;
+          --accent-soft: rgba(127, 163, 74, 0.18);
+          --input-bg: rgba(17, 24, 20, 0.9);
+          --chip-bg: rgba(28, 31, 27, 0.92);
+          --chip-text: #f4ead8;
+          --chip-muted: #d5bf8d;
+          --today-bg: rgba(17, 24, 20, 0.72);
+          --today-text: #f4ead8;
+          --today-muted: #b9aa91;
+          --today-icon-bg: rgba(127, 163, 74, 0.2);
+          --row-bg: #111814;
+          --row-hover: #1d251d;
+          --row-text: #f4ead8;
+          --row-muted: #b9aa91;
+          --empty-bg: rgba(17, 24, 20, 0.64);
+          --date-bg: #5c4b27;
+          --date-text: #f4d38a;
+          --focus-ring: #a8c970;
           --shadow: 0 18px 40px rgba(0, 0, 0, 0.34);
           --chip-shadow: none;
         }
@@ -60,25 +80,35 @@
 
       html[data-theme="dark"] {
         color-scheme: dark;
-        --bg: #090910;
-        --surface: #11111a;
-        --surface-muted: #1d1b29;
-        --text: #f5f3ff;
-        --muted: #a7a1ba;
-        --line: #29263a;
-        --primary: #8b7cff;
-        --primary-strong: #c8c1ff;
-        --accent-soft: #211b3c;
-        --input-bg: #15141e;
-        --chip-bg: #171522;
-        --today-bg: #20193d;
-        --today-text: #fbfaff;
-        --today-muted: #c2bce9;
-        --today-icon-bg: rgba(139, 124, 255, 0.18);
-        --row-bg: #15131e;
-        --row-hover: #1c1929;
-        --empty-bg: #12111a;
-        --focus-ring: #d9d2ff;
+        --theme-source-wall: #d0aa7b;
+        --theme-source-floor: #1d1d1f;
+        --bg: #1d1d1f;
+        --bg-soft: #242628;
+        --surface: rgba(29, 31, 29, 0.92);
+        --surface-muted: rgba(111, 90, 53, 0.26);
+        --text: #f4ead8;
+        --muted: #b9aa91;
+        --line: rgba(111, 90, 53, 0.5);
+        --primary: #7fa34a;
+        --primary-strong: #a8c970;
+        --accent-orange: #f4a53d;
+        --accent-soft: rgba(127, 163, 74, 0.18);
+        --input-bg: rgba(17, 24, 20, 0.9);
+        --chip-bg: rgba(28, 31, 27, 0.92);
+        --chip-text: #f4ead8;
+        --chip-muted: #d5bf8d;
+        --today-bg: rgba(17, 24, 20, 0.72);
+        --today-text: #f4ead8;
+        --today-muted: #b9aa91;
+        --today-icon-bg: rgba(127, 163, 74, 0.2);
+        --row-bg: #111814;
+        --row-hover: #1d251d;
+        --row-text: #f4ead8;
+        --row-muted: #b9aa91;
+        --empty-bg: rgba(17, 24, 20, 0.64);
+        --date-bg: #5c4b27;
+        --date-text: #f4d38a;
+        --focus-ring: #a8c970;
         --shadow: 0 18px 40px rgba(0, 0, 0, 0.34);
         --chip-shadow: none;
       }
@@ -90,7 +120,9 @@
       body {
         margin: 0;
         min-height: 100vh;
-        background: var(--bg);
+        background:
+          radial-gradient(circle at 50% -10%, color-mix(in srgb, var(--bg-soft) 72%, transparent), transparent 42rem),
+          var(--bg);
         color: var(--text);
         font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
         font-size: 16px;
@@ -115,7 +147,7 @@
       }
 
       .app-shell {
-        width: min(980px, calc(100% - 32px));
+        width: min(1440px, calc(100% - 32px));
         margin: 0 auto;
         padding: 28px 0 40px;
       }
@@ -162,6 +194,7 @@
         background: var(--chip-bg);
         border: 1px solid var(--line);
         border-radius: 999px;
+        color: var(--chip-text);
         padding: 7px 11px;
         box-shadow: var(--chip-shadow);
       }
@@ -174,7 +207,7 @@
 
       .stat span {
         display: inline;
-        color: var(--muted);
+        color: var(--chip-muted);
         font-size: 0.78rem;
         white-space: nowrap;
       }
@@ -184,7 +217,7 @@
         border: 1px solid var(--line);
         border-radius: 999px;
         background: var(--chip-bg);
-        color: var(--text);
+        color: var(--chip-text);
         padding: 0 13px;
         box-shadow: var(--chip-shadow);
         cursor: pointer;
@@ -194,6 +227,23 @@
       .theme-toggle:hover {
         border-color: var(--primary);
         color: var(--primary-strong);
+      }
+
+      .hero-banner {
+        margin: 0 0 18px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+      }
+
+      .hero-banner-image {
+        display: block;
+        width: 100%;
+        height: clamp(220px, 34vw, 420px);
+        object-fit: cover;
+        object-position: center;
       }
 
       .panel {
@@ -386,6 +436,7 @@
         border-radius: 8px;
         padding: 12px;
         background: var(--row-bg);
+        color: var(--row-text);
         transition: background 140ms ease, border-color 140ms ease;
       }
 
@@ -436,8 +487,8 @@
         justify-self: end;
         min-height: 28px;
         border-radius: 999px;
-        background: var(--surface-muted);
-        color: var(--primary-strong);
+        background: var(--date-bg);
+        color: var(--date-text);
         padding: 0 9px;
         font-size: 0.86rem;
         font-weight: 750;
@@ -461,7 +512,7 @@
 
       .record-description {
         margin: 0;
-        color: var(--muted);
+        color: var(--row-muted);
         white-space: pre-wrap;
       }
 
@@ -548,6 +599,16 @@
           <button id="theme-toggle" class="theme-toggle" type="button" aria-label="深色模式" aria-pressed="false">深色模式：關</button>
         </div>
       </header>
+
+      <section class="hero-banner" aria-label="首頁運動貓健身房橫幅">
+        <img
+          class="hero-banner-image"
+          src="assets/banner-cats-gym.png"
+          alt="程式貓在健身房運動的像素風 banner"
+          width="2172"
+          height="724"
+        >
+      </section>
 
       <section class="today-section" aria-labelledby="today-heading">
         <h2 class="section-heading" id="today-heading">今日運動</h2>
