@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import assert from "node:assert/strict";
@@ -8,6 +8,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, "..");
 const html = readFileSync(join(root, "index.html"), "utf8");
 const data = readFileSync(join(root, "data.js"), "utf8");
+const bannerAsset = join(root, "assets", "banner-cats-gym.png");
 
 const expectations = [
   ["data script", /<script src="data\.js"><\/script>/],
@@ -18,6 +19,12 @@ const expectations = [
   ["history count", /id="history-count"/],
   ["filter field", /id="search-input"/],
   ["filter field aria label", /id="search-input"[^>]*aria-label="搜尋歷史影片"/],
+  ["banner section", /<section\b(?=[^>]*\bclass="(?:[^"]*\s)?hero-banner(?:\s[^"]*)?")/],
+  ["banner image", /<img\b(?=[^>]*\bclass="(?:[^"]*\s)?hero-banner-image(?:\s[^"]*)?")(?=[^>]*\bsrc="assets\/banner-cats-gym\.png")/],
+  ["banner alt text", /<img\b(?=[^>]*\bsrc="assets\/banner-cats-gym\.png")(?=[^>]*\balt="[^"]*貓[^"]*健身[^"]*")/],
+  ["wall theme token", /--theme-source-wall:\s*#d0aa7b/i],
+  ["floor theme token", /--theme-source-floor:\s*#1d1d1f/i],
+  ["hero banner image CSS", /\.hero-banner-image\s*{[^}]*object-fit:\s*cover/],
   ["theme toggle", /id="theme-toggle"/],
   ["theme toggle button class", /<button\b(?=[^>]*\sid="theme-toggle")(?=[^>]*\sclass="(?:[^"]*\s)?theme-toggle(?:\s[^"]*)?")/],
   ["theme toggle function", /function toggleTheme/],
@@ -48,6 +55,8 @@ for (const [label, pattern] of expectations) {
   assert.match(html, pattern, `Missing ${label}`);
 }
 
+assert.ok(existsSync(bannerAsset), "Banner asset should be committed at assets/banner-cats-gym.png");
+
 const forbiddenHtml = [
   ["entry form", /id="entry-form"/],
   ["localStorage", /localStorage/],
@@ -61,6 +70,10 @@ const forbiddenHtml = [
   ["edit action", /data-action="edit"|editEntry|編輯/],
   ["delete action", /data-action="delete"|deleteEntry|刪除/],
   ["JSON export button", /id="export-json"|exportEntries|匯出 JSON/],
+  ["banner CSS filter", /\.hero-banner-image\s*{[^}]*filter\s*:/],
+  ["banner mix blend", /\.hero-banner-image\s*{[^}]*mix-blend-mode\s*:/],
+  ["banner opacity change", /\.hero-banner-image\s*{[^}]*opacity\s*:/],
+  ["banner overlay pseudo element", /\.hero-banner::(?:before|after)/],
 ];
 
 for (const [label, pattern] of forbiddenHtml) {
