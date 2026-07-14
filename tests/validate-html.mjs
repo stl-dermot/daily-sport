@@ -23,10 +23,16 @@ const expectations = [
   ["banner section", /<section\b(?=[^>]*\bclass="(?:[^"]*\s)?hero-banner(?:\s[^"]*)?")/],
   ["banner image", /<img\b(?=[^>]*\bclass="(?:[^"]*\s)?hero-banner-image(?:\s[^"]*)?")(?=[^>]*\bsrc="assets\/banner-cats-gym\.png\?v=\d{14}")/],
   ["banner image cache buster", /<img\b(?=[^>]*\bsrc="assets\/banner-cats-gym\.png\?v=\d{14}")/],
-  ["banner image dimensions", /<img\b(?=[^>]*\bsrc="assets\/banner-cats-gym\.png\?v=\d{14}")(?=[^>]*\bwidth="2472")(?=[^>]*\bheight="724")/],
+  ["banner image dimensions", /<img\b(?=[^>]*\bsrc="assets\/banner-cats-gym\.png\?v=\d{14}")(?=[^>]*\bwidth="1956")(?=[^>]*\bheight="804")/],
   ["banner alt text", /<img\b(?=[^>]*\bsrc="assets\/banner-cats-gym\.png\?v=\d{14}")(?=[^>]*\balt="[^"]*貓[^"]*健身[^"]*")/],
   ["wall theme token", /--theme-source-wall:\s*#d0aa7b/i],
   ["floor theme token", /--theme-source-floor:\s*#1d1d1f/i],
+  ["light background token", /:root,\s*html\[data-theme="light"\]\s*{[\s\S]*?--bg:\s*#d6b381/i],
+  ["light soft background token", /:root,\s*html\[data-theme="light"\]\s*{[\s\S]*?--bg-soft:\s*#d6b381/i],
+  ["system dark background token", /@media\s*\(prefers-color-scheme:\s*dark\)\s*{[\s\S]*?:root\s*{[\s\S]*?--bg:\s*#27282c/i],
+  ["system dark soft background token", /@media\s*\(prefers-color-scheme:\s*dark\)\s*{[\s\S]*?:root\s*{[\s\S]*?--bg-soft:\s*#27282c/i],
+  ["manual dark background token", /html\[data-theme="dark"\]\s*{[\s\S]*?--bg:\s*#27282c/i],
+  ["manual dark soft background token", /html\[data-theme="dark"\]\s*{[\s\S]*?--bg-soft:\s*#27282c/i],
   ["hero banner full width CSS", /\.hero-banner\s*{[^}]*width:\s*100%/],
   ["hero banner no margin CSS", /\.hero-banner\s*{[^}]*margin:\s*0\b/],
   ["hero banner no padding CSS", /\.hero-banner\s*{[^}]*padding:\s*0\b/],
@@ -34,6 +40,9 @@ const expectations = [
   ["hero banner transparent CSS", /\.hero-banner\s*{[^}]*background:\s*transparent/],
   ["hero banner image full width CSS", /\.hero-banner-image\s*{[^}]*width:\s*100%/],
   ["hero banner image natural height CSS", /\.hero-banner-image\s*{[^}]*height:\s*auto/],
+  ["content shell overlap position CSS", /\.app-shell--content\s*{[^}]*position:\s*relative/],
+  ["content shell overlap z index CSS", /\.app-shell--content\s*{[^}]*z-index:\s*1/],
+  ["content shell overlaps banner CSS", /\.app-shell--content\s*{[^}]*margin-top:\s*-120px/],
   ["theme toggle", /id="theme-toggle"/],
   ["theme toggle button class", /<button\b(?=[^>]*\sid="theme-toggle")(?=[^>]*\sclass="(?:[^"]*\s)?theme-toggle(?:\s[^"]*)?")/],
   ["theme toggle function", /function toggleTheme/],
@@ -66,8 +75,8 @@ for (const [label, pattern] of expectations) {
 
 assert.ok(existsSync(bannerAsset), "Banner asset should be committed at assets/banner-cats-gym.png");
 const bannerData = readFileSync(bannerAsset);
-assert.equal(bannerData.readUInt32BE(16), 2472, "Banner asset width should be extended to 2472px");
-assert.equal(bannerData.readUInt32BE(20), 724, "Banner asset height should stay 724px");
+assert.equal(bannerData.readUInt32BE(16), 1956, "Banner asset width should be 1956px");
+assert.equal(bannerData.readUInt32BE(20), 804, "Banner asset height should be 804px");
 
 const forbiddenHtml = [
   ["entry form", /id="entry-form"/],
